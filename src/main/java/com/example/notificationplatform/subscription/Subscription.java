@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -19,7 +20,6 @@ import java.util.UUID;
 })
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Subscription {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -38,4 +38,11 @@ public class Subscription {
     @CreatedDate
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private Instant createdAt;
+
+    public Subscription(String eventType, ChannelType channel, String target){
+        this.eventType = eventType;
+        this.channel = channel;
+        this.target = Objects.requireNonNull(target);
+        this.createdAt = Instant.now();
+    }
 }
