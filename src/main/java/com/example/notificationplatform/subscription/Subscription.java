@@ -2,7 +2,6 @@ package com.example.notificationplatform.subscription;
 
 import com.example.notificationplatform.util.ChannelType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
