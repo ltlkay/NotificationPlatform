@@ -10,7 +10,7 @@ copy src src
 run ./gradlew bootJar -x test
 
 workdir /workspace/app/extracted
-run java -Djarmode=tools -jar ../build/libs/*.jar extract --layers --destination .
+run java -Djarmode=tools -jar ../build/libs/*.jar extract --layers --launcher --destination .
 
 from eclipse-temurin:26-jdk-jammy
 volume /tmp
