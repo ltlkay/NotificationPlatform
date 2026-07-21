@@ -24,14 +24,14 @@ public class EventProducer {
 
         future.whenComplete((result, exception) -> {
             if (exception != null) {
-                handleFailure(event.eventType(), event, exception);
+                handleFailure(event.eventType(), exception);
             } else {
                 handleSuccess(result);
             }
         });
     }
 
-    private void handleFailure(String key, NotificationEvent event, Throwable exception) {
+    private void handleFailure(String key, Throwable exception) {
         log.error("Failed to deliver message to topic {} with key {}. Error {}",
                 topic, key, exception.getMessage(), exception);
     }
