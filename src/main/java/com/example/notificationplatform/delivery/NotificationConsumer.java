@@ -1,8 +1,6 @@
 package com.example.notificationplatform.delivery;
 
-import com.example.notificationplatform.delivery.channel.EmailChannel;
 import com.example.notificationplatform.delivery.channel.NotificationChannel;
-import com.example.notificationplatform.delivery.channel.WebhookChannel;
 import com.example.notificationplatform.event.NotificationEvent;
 import com.example.notificationplatform.subscription.Subscription;
 import com.example.notificationplatform.subscription.SubscriptionRepository;
