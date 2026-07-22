@@ -24,6 +24,10 @@ spring:
       retries: 3
     template:
       default-topic: notification-events
+  http:
+    client:
+      connect-timeout: 5s
+      read-timeout: 5s
 notification:
   email:
     failure-rate: 0.2

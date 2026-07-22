@@ -15,6 +15,7 @@ public class EmailChannel implements NotificationChannel{
     @Value("${notification.email.failure-rate:0.0}")
     private double failureRate;
 
+    @Override
     public DeliveryResult send(Subscription subscription, NotificationEvent event) {
 
         if (ThreadLocalRandom.current().nextDouble() < failureRate) {
