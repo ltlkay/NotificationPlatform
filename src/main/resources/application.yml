@@ -24,3 +24,6 @@ spring:
       retries: 3
     template:
       default-topic: notification-events
+notification:
+  email:
+    failure-rate: 0.2
