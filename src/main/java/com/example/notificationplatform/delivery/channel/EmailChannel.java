@@ -19,9 +19,9 @@ public class EmailChannel implements NotificationChannel{
     public DeliveryResult send(Subscription subscription, NotificationEvent event) {
 
         if (ThreadLocalRandom.current().nextDouble() < failureRate) {
-            return DeliveryResult.failure("simulated email failure");
+            return DeliveryResult.failure("simulated email failure", 1);
         }
         log.info("email sent to {}: {} - {}", subscription.getTarget(), event.eventType(), event.payload());
-        return DeliveryResult.success();
+        return DeliveryResult.success(1);
     }
 }

@@ -10,11 +10,20 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaConfig {
 
     @Value("${spring.kafka.template.default-topic}")
-    private String topicName;
+    private String defaultTopicName;
+
+    @Value("${spring.kafka.template.dlq-topic}")
+    private String dlqTopicName;
 
     @Bean
     public NewTopic notificationTopic() {
-        return TopicBuilder.name(topicName)
+        return TopicBuilder.name(defaultTopicName)
+                .partitions(3)
+                .build();
+    }
+
+    @Bean NewTopic dlqTopic() {
+        return TopicBuilder.name(dlqTopicName)
                 .partitions(3)
                 .build();
     }
