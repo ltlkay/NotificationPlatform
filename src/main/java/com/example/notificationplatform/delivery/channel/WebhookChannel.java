@@ -5,7 +5,6 @@ import com.example.notificationplatform.event.NotificationEvent;
 import com.example.notificationplatform.subscription.Subscription;
 import com.example.notificationplatform.util.WaitStrategy;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
