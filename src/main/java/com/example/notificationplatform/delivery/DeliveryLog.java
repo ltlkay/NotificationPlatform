@@ -33,21 +33,24 @@ public class DeliveryLog {
 
     private String failureReason;
 
+    private int attemptCount;
+
     private DeliveryLog(UUID subscriptionId, UUID eventId,
-                        DeliveryStatus status, String failureReason) {
+                        DeliveryStatus status, String failureReason, int attemptCount) {
         this.subscriptionId = Objects.requireNonNull(subscriptionId);
         this.eventId = Objects.requireNonNull(eventId);
         this.status = status;
         this.failureReason = failureReason;
         this.attemptedAt = Instant.now();
+        this.attemptCount = attemptCount;
     }
 
-    public static DeliveryLog onSuccess(UUID subscriptionId, UUID eventId) {
-        return new DeliveryLog(subscriptionId, eventId, DeliveryStatus.SUCCESS, null);
+    public static DeliveryLog onSuccess(UUID subscriptionId, UUID eventId, int attemptCount) {
+        return new DeliveryLog(subscriptionId, eventId, DeliveryStatus.SUCCESS, null, attemptCount);
     }
 
-    public static DeliveryLog onFailure(UUID subscriptionId, UUID eventId, String reason) {
-        return new DeliveryLog(subscriptionId, eventId, DeliveryStatus.FAILED, Objects.requireNonNull(reason));
+    public static DeliveryLog onFailure(UUID subscriptionId, UUID eventId, String reason, int attemptCount) {
+        return new DeliveryLog(subscriptionId, eventId, DeliveryStatus.FAILED, Objects.requireNonNull(reason), attemptCount);
     }
 
 }
