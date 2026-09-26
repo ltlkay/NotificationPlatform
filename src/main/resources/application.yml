@@ -4,7 +4,9 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/np_db_local
     username: postgres
-    password: PgSup13!
+    password: ${DB_PASSWORD}
+  config:
+    import: optional:file:.env[.properties]
   jpa:
     hibernate:
       ddl-auto: update
