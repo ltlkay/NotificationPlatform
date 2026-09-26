@@ -1,0 +1,23 @@
+### create failing-webhook subscription
+POST {{baseUrl}}/subscriptions
+Content-Type: application/json
+
+{
+  "eventType": "ORDER_SHIPPED",
+  "channel": "WEBHOOK",
+  "target": "https://httpstat.us/500"
+}
+
+> {%  client.global.set("subId", response.body.id); %}
+
+### publish matching event
+POST {{baseUrl}}/events
+Content-Type: application/json
+
+{
+  "eventType": "ORDER_SHIPPED",
+  "payload": {"orderId": "123"}
+}
+
+### check delivery log
+GET {{baseUrl}}/deliveries?subscriptionId={{subId}}
