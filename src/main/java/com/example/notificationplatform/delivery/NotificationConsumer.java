@@ -53,7 +53,11 @@ public class NotificationConsumer {
                     } else {
                         handleSuccess(dResult);
                     }
-                });
+                })
+                        .exceptionally(ex -> {
+                            log.error("Unhandled exception in Kafka send callback", ex);
+                            return null;
+                        });
             }
             deliveryLogRepository.save(toDeliveryLog(sub,event,result));
         }

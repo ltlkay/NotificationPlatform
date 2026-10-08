@@ -28,7 +28,11 @@ public class EventProducer {
             } else {
                 handleSuccess(result);
             }
-        });
+        })
+                .exceptionally(ex -> {
+                    log.error("Unhandled exception in Kafka send callback", ex);
+                    return null;
+                });
     }
 
     private void handleFailure(String key, Throwable exception) {
@@ -41,5 +45,9 @@ public class EventProducer {
                 topic,
                 result.getRecordMetadata().partition(),
                 result.getRecordMetadata().offset());
+    }
+
+    void setTopic(String topic) {
+        this.topic = topic;
     }
 }
