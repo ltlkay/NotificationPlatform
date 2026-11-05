@@ -6,12 +6,14 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 
 public record DeliveryResult(@NotNull DeliveryStatus status, String failureReason, int attemptCount) {
+    static final String UNKNOWN_REASON = "Unknown reason";
+
     public DeliveryResult {
         Objects.requireNonNull(status);
         if (attemptCount < 1) {
             throw new IllegalArgumentException("attemptCount should be no less than 1.");
         }
-        if (status == DeliveryStatus.FAILED && failureReason == null) {
+        if (status == DeliveryStatus.FAILED && (failureReason == null || failureReason.isBlank())) {
             throw new IllegalArgumentException("failureReason is required when status is FAILED");
         }
         if (status == DeliveryStatus.SUCCESS && failureReason != null) {
@@ -25,6 +27,7 @@ public record DeliveryResult(@NotNull DeliveryStatus status, String failureReaso
     }
 
     public static DeliveryResult failure(String reason, int attemptCount){
-        return new DeliveryResult(DeliveryStatus.FAILED, Objects.requireNonNull(reason), attemptCount);
+        String normalized = (reason == null || reason.isBlank()) ? UNKNOWN_REASON : reason;
+        return new DeliveryResult(DeliveryStatus.FAILED, normalized, attemptCount);
     }
 }
