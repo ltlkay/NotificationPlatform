@@ -37,3 +37,6 @@ out/
 .vscode/
 /scripts/http/http-client.private.env.json
 /.env
+
+### Claude Code ###
+.claude/

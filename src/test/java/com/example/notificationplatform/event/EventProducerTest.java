@@ -15,16 +15,9 @@ import org.springframework.kafka.support.SendResult;
 
 import java.util.concurrent.CompletableFuture;
 
+import static com.example.notificationplatform.util.KafkaTestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-
-import static com.example.notificationplatform.util.KafkaTestData.createEvent;
-import static com.example.notificationplatform.util.KafkaTestData.stubSend;
-import static com.example.notificationplatform.util.KafkaTestData.stubSendSuccess;
-import static com.example.notificationplatform.util.KafkaTestData.TOPIC;
-import static com.example.notificationplatform.util.KafkaTestData.EVENT_TYPE;
-import static com.example.notificationplatform.util.KafkaTestData.PART_NUM;
-import static com.example.notificationplatform.util.KafkaTestData.OFFSET;
 
 @ExtendWith(MockitoExtension.class)
 class EventProducerTest {
@@ -35,14 +28,7 @@ class EventProducerTest {
     @InjectMocks
     private EventProducer eventProducer;
 
-    private static final String SUCCESS_MSG =
-            String.format("Successfully sent message to topic %s partition %d offset %d",
-                    TOPIC, PART_NUM, OFFSET);
-    private static final String FAIL_MSG = String.format("Failed to deliver message to topic %s with key %s",
-            TOPIC, EVENT_TYPE);
     private static final String RT_EXCEPTION_MSG = "Boom test";
-    private static final String THROW_EXCEPTION_MSG = "... bad meta";
-    private static final String THROW_MSG = "Unhandled exception in Kafka send callback";
 
     @BeforeEach
     void setUp() {
@@ -74,45 +60,46 @@ class EventProducerTest {
 
         eventProducer.send(testEvent);
 
-        testLogAppender.assertLogged(Level.INFO, SUCCESS_MSG);
+        testLogAppender.assertLogged(Level.INFO, successMessage(TOPIC));
         testLogAppender.assertNoErrorLogged();
     }
 
     @Test
     void send_whenCallbackFails_logsFailure() {
         NotificationEvent testEvent = createEvent();
-        stubSend(kafkaTemplate,
+        stubSendNotification(kafkaTemplate,
                 CompletableFuture.failedFuture(new RuntimeException(RT_EXCEPTION_MSG)),
                 testEvent);
 
         eventProducer.send(testEvent);
 
+        assertThat(testLogAppender.eventsAt(Level.ERROR)).hasSize(1);
         assertThat(testLogAppender.eventsAt(Level.ERROR)).anySatisfy(event -> {
-            assertThat(event.getFormattedMessage()).startsWith(FAIL_MSG);
+            assertThat(event.getFormattedMessage()).startsWith(failMessage(TOPIC));
             assertThat(event.getThrowableProxy()).isNotNull();
             assertThat(event.getThrowableProxy().getMessage()).isEqualTo(RT_EXCEPTION_MSG);
         });
-        testLogAppender.assertNotLogged(Level.INFO, SUCCESS_MSG);
+        testLogAppender.assertNotLogged(Level.INFO, successMessage(TOPIC));
     }
 
     @Test
     void send_whenCallbackThrows_logsUnhandledError() {
         NotificationEvent testEvent = createEvent();
         SendResult<String, NotificationEvent> mockResult = mock();
-        stubSend(kafkaTemplate,
+        stubSendNotification(kafkaTemplate,
                 CompletableFuture.completedFuture(mockResult),
                 testEvent);
-        when(mockResult.getRecordMetadata()).thenThrow(new RuntimeException(THROW_EXCEPTION_MSG));
+        when(mockResult.getRecordMetadata()).thenThrow(new RuntimeException(BAD_METADATA_MSG));
 
         eventProducer.send(testEvent);
 
+        assertThat(testLogAppender.eventsAt(Level.ERROR)).hasSize(1);
         assertThat(testLogAppender.eventsAt(Level.ERROR)).anySatisfy(event -> {
-            assertThat(event.getFormattedMessage()).startsWith(THROW_MSG);
+            assertThat(event.getFormattedMessage()).startsWith(CALLBACK_ERROR_PREFIX);
             assertThat(event.getThrowableProxy()).isNotNull();
-            assertThat(event.getThrowableProxy().getCause()).isNotNull();
-            assertThat(event.getThrowableProxy().getCause().getMessage()).isEqualTo(THROW_EXCEPTION_MSG);
+            assertThat(event.getThrowableProxy().getMessage()).isEqualTo(BAD_METADATA_MSG);
         });
-        testLogAppender.assertNotLogged(Level.INFO, SUCCESS_MSG);
+        testLogAppender.assertNotLogged(Level.INFO, successMessage(TOPIC));
     }
 }
 

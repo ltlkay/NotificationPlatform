@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
 
+import static com.example.notificationplatform.util.FailureReasons.reasonOf;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,22 +24,20 @@ public class EventProducer {
     public void send(NotificationEvent event) {
         CompletableFuture<SendResult<String, NotificationEvent>> future = kafkaTemplate.send(topic, event.eventType(), event);
 
-        future.whenComplete((result, exception) -> {
-            if (exception != null) {
-                handleFailure(event.eventType(), exception);
-            } else {
-                handleSuccess(result);
+        future.handle((result, ex) -> {
+            try {
+                if (ex != null) handleFailure(event.eventType(), ex);
+                else handleSuccess(result);
+            } catch (Exception e) {
+                log.error("Unhandled exception in Kafka send callback", e);
             }
-        })
-                .exceptionally(ex -> {
-                    log.error("Unhandled exception in Kafka send callback", ex);
-                    return null;
-                });
+            return null;
+        });
     }
 
     private void handleFailure(String key, Throwable exception) {
         log.error("Failed to deliver message to topic {} with key {}. Error {}",
-                topic, key, exception.getMessage(), exception);
+                topic, key, reasonOf(exception), exception);
     }
 
     private void handleSuccess(SendResult<String,NotificationEvent> result){

@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.example.notificationplatform.util.FailureReasons.reasonOf;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -40,26 +42,12 @@ public class NotificationConsumer {
             try {
                 result = resolveChannel(sub.getChannel()).send(sub, event);
             } catch (Exception e){
-                result = DeliveryResult.failure(e.getMessage(),1);
-            }
-            if (sub.getChannel() == ChannelType.WEBHOOK && result.status() == DeliveryStatus.FAILED) {
-                DeadLetterEvent dEvent = DeadLetterEvent.of(sub.getId(),event,result.failureReason(),result.attemptCount());
-                CompletableFuture<SendResult<String, DeadLetterEvent>> future = kafkaTemplate.send(deadLetterTopic,
-                        event.eventType(),
-                        dEvent);
-                future.whenComplete((dResult, exception) -> {
-                    if (exception != null) {
-                        handleFailure(event.eventType(), exception);
-                    } else {
-                        handleSuccess(dResult);
-                    }
-                })
-                        .exceptionally(ex -> {
-                            log.error("Unhandled exception in Kafka send callback", ex);
-                            return null;
-                        });
+                result = DeliveryResult.failure(reasonOf(e),1);
             }
             deliveryLogRepository.save(toDeliveryLog(sub,event,result));
+            if (sub.getChannel() == ChannelType.WEBHOOK && result.status() == DeliveryStatus.FAILED) {
+                sendToDeadLetter(sub, event, result);
+            }
         }
     }
 
@@ -79,7 +67,7 @@ public class NotificationConsumer {
 
     private void handleFailure(String key, Throwable exception) {
         log.error("Failed to deliver message to topic {} with key {}. Error {}",
-                deadLetterTopic, key, exception.getMessage(), exception);
+                deadLetterTopic, key, reasonOf(exception), exception);
     }
 
     private void handleSuccess(SendResult<String,DeadLetterEvent> result){
@@ -87,5 +75,32 @@ public class NotificationConsumer {
                 deadLetterTopic,
                 result.getRecordMetadata().partition(),
                 result.getRecordMetadata().offset());
+    }
+
+    private void sendToDeadLetter(Subscription sub, NotificationEvent event, DeliveryResult result) {
+        CompletableFuture<SendResult<String, DeadLetterEvent>> future;
+        try {
+            DeadLetterEvent dEvent = DeadLetterEvent.of(sub.getId(),event,
+                    result.failureReason(),result.attemptCount());
+            future = kafkaTemplate.send(deadLetterTopic,
+                    event.eventType(),
+                    dEvent);
+        } catch (Exception e) {
+            handleFailure(event.eventType(), e);
+            return;
+        }
+        future.handle((dResult, ex) -> {
+            try {
+                if (ex != null) handleFailure(event.eventType(), ex);
+                else handleSuccess(dResult);
+            } catch (Exception e) {
+                log.error("Unhandled exception in Kafka send callback", e);
+            }
+            return null;
+        });
+    }
+
+    void setDeadLetterTopic(String topic) {
+        this.deadLetterTopic = topic;
     }
 }
